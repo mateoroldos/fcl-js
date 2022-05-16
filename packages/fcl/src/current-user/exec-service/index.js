@@ -3,6 +3,7 @@ import {execIframeRPC} from "./strategies/iframe-rpc"
 import {execPopRPC} from "./strategies/pop-rpc"
 import {execTabRPC} from "./strategies/tab-rpc"
 import {execExtRPC} from "./strategies/ext-rpc"
+import {execWcRPC} from "./strategies/wc-rpc"
 import {invariant} from "@onflow/util-invariant"
 import {configLens} from "../../config-utils"
 import {VERSION} from "../../VERSION"
@@ -14,6 +15,7 @@ const STRATEGIES = {
   "POP/RPC": execPopRPC,
   "TAB/RPC": execTabRPC,
   "EXT/RPC": execExtRPC,
+  "WC/RPC": execWcRPC,
 }
 
 export async function execService({service, msg = {}, opts = {}, config = {}}) {
@@ -31,33 +33,32 @@ export async function execService({service, msg = {}, opts = {}, config = {}}) {
   }
 
   try {
-    const res = await STRATEGIES[service.method](
-      service, 
-      msg, 
-      opts, 
-      fullConfig
-    )
+    const res = await STRATEGIES[service.method](service, msg, opts, fullConfig)
     if (res.status === "REDIRECT") {
       invariant(
         service.type === res.data.type,
         "Cannot shift recursive service type in execService"
       )
       return await execService({
-        service: res.data, 
-        msg, 
-        opts, 
-        config: fullConfig
+        service: res.data,
+        msg,
+        opts,
+        config: fullConfig,
       })
     } else {
       return res
     }
   } catch (error) {
-    console.error("execService({service, msg = {}, opts = {}, config = {}})", error, {
-      service,
-      msg,
-      opts,
-      config
-    })
+    console.error(
+      "execService({service, msg = {}, opts = {}, config = {}})",
+      error,
+      {
+        service,
+        msg,
+        opts,
+        config,
+      }
+    )
     throw error
   }
 }
