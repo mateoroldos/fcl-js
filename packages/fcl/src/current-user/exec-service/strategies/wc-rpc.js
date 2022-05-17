@@ -4,12 +4,14 @@ import {normalizePollingResponse} from "../../normalize/polling-response"
 export function execWcRPC(service, body, opts, config) {
   return new Promise((resolve, reject) => {
     wc(service, {
-      async onReady(_, {send}) {
+      async onReady(session, {send}) {
         try {
           send({
-            jsonrpc: "2.0",
-            method: "flow_authn",
-            params: [body, service.params],
+            topic: session.topic,
+            request: {
+              method: service.endpoint,
+              params: [body, service.params],
+            },
           })
         } catch (error) {
           throw error

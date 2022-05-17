@@ -77,11 +77,7 @@ const connectWc = async client => {
 }
 
 export async function wc(service, opts = {}) {
-  if (service == null)
-    return {
-      send: noop,
-      close: noop,
-    }
+  if (service == null) return {send: noop, close: noop}
 
   const onReady = opts.onReady || noop
   const onResponse = opts.onResponse || noop
@@ -89,13 +85,29 @@ export async function wc(service, opts = {}) {
   const {client, QRCodeModal} = await config.get("wc.adapter")
   const {pairings, storedSession} = await checkPersistedState(client)
 
+  const send = msg => {
+    try {
+      console.log("Send", msg)
+    } catch (error) {
+      console.error("Ext Send Error", msg, error)
+    }
+  }
+
+  const close = () => {
+    try {
+      // onClose()
+    } catch (error) {
+      console.error("Ext Close Error", error)
+    }
+  }
+
   // if pairings === true, need user input, openPairingModal() to select;
   let session = storedSession
   if (session == null) {
-    console.log("Session is null", session)
     session = await connectWc(client)
   }
 
+  //onReady(session, {send, close})
   if (service.endpoint === "flow_authn") {
     try {
       console.log("<--- handle Authn -->")
@@ -106,23 +118,9 @@ export async function wc(service, opts = {}) {
           params: [],
         },
       })
-      onResponse(
-        {
-          f_type: "PollingResponse",
-          f_vsn: "1.0.0",
-          status: "APPROVED",
-          reason: null,
-          data: {
-            f_type: "AuthnResponse",
-            f_vsn: "1.0.0",
-            addr: "0xf8d6e0586b0a20c7",
-            services,
-          },
-        },
-        {
-          close: () => QRCodeModal.close(),
-        }
-      )
+      onResponse(result, {
+        close: () => QRCodeModal.close(),
+      })
     } catch (e) {
       console.error(e)
     }
@@ -149,20 +147,4 @@ export async function wc(service, opts = {}) {
   }
 
   return {send, close}
-
-  function close() {
-    try {
-      // onClose()
-    } catch (error) {
-      console.error("Ext Close Error", error)
-    }
-  }
-
-  function send(msg) {
-    try {
-      console.log("Send")
-    } catch (error) {
-      console.error("Ext Send Error", msg, error)
-    }
-  }
 }
