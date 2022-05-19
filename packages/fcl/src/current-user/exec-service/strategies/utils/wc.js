@@ -59,7 +59,7 @@ const checkPersistedState = async client => {
 const connectWc = async client => {
   try {
     const session = await client.connect({
-      metadata: DEFAULT_APP_METADATA, // getAppMetadata() || DEFAULT_APP_METADATA,
+      metadata: DEFAULT_APP_METADATA,
       //pairing: client.pairing.topics.length ? client.pairing.topics[0] : null,
       permissions: {
         blockchain: {
@@ -76,7 +76,7 @@ const connectWc = async client => {
   }
 }
 
-export async function wc(service, opts = {}) {
+export async function wc(service, body, opts = {}) {
   if (service == null) return {send: noop, close: noop}
 
   const onReady = opts.onReady || noop
@@ -95,7 +95,7 @@ export async function wc(service, opts = {}) {
 
   const close = () => {
     try {
-      // onClose()
+      onClose()
     } catch (error) {
       console.error("Ext Close Error", error)
     }
@@ -107,7 +107,6 @@ export async function wc(service, opts = {}) {
     session = await connectWc(client)
   }
 
-  //onReady(session, {send, close})
   if (service.endpoint === "flow_authn") {
     try {
       console.log("<--- handle Authn -->")
@@ -129,13 +128,29 @@ export async function wc(service, opts = {}) {
   if (service.endpoint === "flow_authz") {
     try {
       console.log("<--- handle Authz -->")
+      const result = await client.request({
+        topic: session.topic,
+        request: {
+          method: "flow_authz",
+          params: [body, service.params, service.data, service.type],
+        },
+      })
+
       onResponse(
         {
           f_type: "PollingResponse",
           f_vsn: "1.0.0",
+          type: "FCL:VIEW:RESPONSE",
           status: "APPROVED",
           reason: null,
-          data: {},
+          data: {
+            f_type: "CompositeSignature",
+            f_vsn: "1.0.0",
+            addr: "0xf8d6e0586b0a20c7",
+            keyId: 0,
+            signature:
+              "fa74eb89ba9bc7b181e24dbfe1a50e5d02e4aa1d5e4a2421e55dd86ff35e8e4aa960c6baa6554439167e59fcad1701f6aa23f811934140e3be75f41a63459e37",
+          },
         },
         {
           close: () => QRCodeModal.close(),

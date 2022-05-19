@@ -3,16 +3,20 @@ import {normalizePollingResponse} from "../../normalize/polling-response"
 
 export function execWcRPC(service, body, opts, config) {
   return new Promise((resolve, reject) => {
-    wc(service, {
+    wc(service, body, {
       async onReady(session, {send}) {
         try {
-          send({
-            topic: session.topic,
-            request: {
-              method: service.endpoint,
-              params: [body, service.params],
-            },
-          })
+          if (service.endpoint === "flow_authn") {
+          }
+          if (service.endpoint === "flow_authz") {
+            send({
+              topic: session.topic,
+              request: {
+                method: service.endpoint,
+                params: [body, service.params],
+              },
+            })
+          }
         } catch (error) {
           throw error
         }
