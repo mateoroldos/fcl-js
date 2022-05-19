@@ -132,9 +132,11 @@ export async function wc(service, body, opts = {}) {
         topic: session.topic,
         request: {
           method: "flow_authz",
-          params: [body, service.params, service.data, service.type],
+          params: [body],
         },
       })
+
+      console.log("<--- Authz -->", result)
 
       onResponse(
         {
@@ -143,14 +145,7 @@ export async function wc(service, body, opts = {}) {
           type: "FCL:VIEW:RESPONSE",
           status: "APPROVED",
           reason: null,
-          data: {
-            f_type: "CompositeSignature",
-            f_vsn: "1.0.0",
-            addr: "0xf8d6e0586b0a20c7",
-            keyId: 0,
-            signature:
-              "fa74eb89ba9bc7b181e24dbfe1a50e5d02e4aa1d5e4a2421e55dd86ff35e8e4aa960c6baa6554439167e59fcad1701f6aa23f811934140e3be75f41a63459e37",
-          },
+          data: result,
         },
         {
           close: () => QRCodeModal.close(),
